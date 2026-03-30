@@ -1,0 +1,60 @@
+name: rent_roll_x
+file_wildcard: "ResAnalytics_Rent_Roll_x*.xlsx"
+description: "Excel files containing rent roll data for various properties."
+prompt: |
+  STOP condition: If you encounter a row where the first few columns contain "Summary Groups", STOP reading any further rows for data.
+  SKIP condition: Skip any intermediate rows that represent Totals, Subtotals, or where a cell value explicitly says "Total" or "Totals". Do not include them in the DataFrame.
+columns:
+  - name: Unit
+    type: string
+    description: "The unit number or identifier (e.g., Apt 101)"
+  - name: Unit_Type
+    type: string
+    description: "The category of the unit (e.g., 1BR/1BA, Studio)"
+  - name: Unit_Sq_Ft
+    type: number
+    description: "The square footage of the unit"
+  - name: Resident
+    type: string
+    description: "The primary name of the resident occupying the unit"
+  - name: Market_Rent
+    type: number
+    description: "The standard market price for the unit"
+  - name: Actual_Rent
+    type: number
+    description: "The actual rent amount being paid by the resident"
+  - name: Resident_Deposit
+    type: number
+    description: "The security deposit amount paid by the resident"
+  - name: Other_Deposit
+    type: number
+    description: "Additional deposits (e.g., pet deposit, key deposit)"
+  - name: Move_In
+    type: date
+    description: "The date when the resident moved into the unit"
+  - name: Lease_Expiration
+    type: date
+    description: "The date when the current lease agreement expires"
+  - name: Move_Out
+    type: date
+    description: "The date when the resident moved out or is scheduled to move out"
+  - name: Balance
+    type: number
+    description: "The outstanding balance or overpayment on the resident's account"
+  - name: As_Of_Date
+    type: date
+    description: "parse from header. Row 2 often contains As_Of_Date. E.g., 'As Of = 03/09/2026'."
+  - name: Period_Date
+    type: date
+    description: "parse from header. Row 3 often contains Period_Date. E.g., 'Month Year = 03/2026'."
+  - name: Property_Name
+    type: string
+    description: "parse from header. Row 1 often contains Property_Name. E.g., 'Palm Bay Club (x28)' -> Property_Name='Palm Bay Club'."
+  - name: Property_ID
+    type: string
+    description: "parse from header. Row 1 often contains Property_ID in parentheses. E.g., 'Palm Bay Club (x28)' -> Property_ID='x28'."
+  - name: Resident_Status_Type
+    type: string
+    description: "Classification Category Title. This is a standalone title row before each table section (e.g., 'Current/Notice/Vacant' or 'Future Residents/Applicants'). Map this title to this column for all rows in the table beneath it."
+unique_identifier: "Unit"
+date_format: "MM/DD/YYYY"

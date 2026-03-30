@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Example files (keep structure, ignore actual files)
+parsers/**/example/*.xlsx
+parsers/**/example/*.xls
+parsers/**/example/*.csv
+!parsers/**/example/.gitkeep
+
+# Local storage
+storage/
+
+# Azurite
+azurite-data/
+
+# Logs
+*.log
+logs/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build
+dist/
+build/
+*.egg-info/
