@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransformZone Admin</title>
+    <!-- Source Sans Pro Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar (Backpack Style) -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-layer-group"></i> TransformZone
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Administration</div>
+                <a href="/" class="nav-item {% if request.url.path == '/' %}active{% endif %}">
+                    <i class="fas fa-chart-pie"></i> Dashboard
+                </a>
+                
+                <div class="nav-section-title">Mapping Builder</div>
+                <a href="/registry" class="nav-item {% if request.url.path == '/registry' %}active{% endif %}">
+                    <i class="fas fa-file-invoice"></i> Report Registry
+                </a>
+                <a href="/history" class="nav-item {% if request.url.path == '/history' %}active{% endif %}">
+                    <i class="fas fa-history"></i> Build History
+                </a>
+
+                <div class="nav-section-title">Settings</div>
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i> Configs
+                </a>
+            </nav>
+            <div style="padding: 1.5rem; color: #475569; font-size: 0.75rem;">
+                <span class="pill">V1.5.0-ADMIN</span>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-title">
+                    {% block title %}Overview{% endblock %}
+                </div>
+                <div class="header-user" style="display: flex; gap: 15px; align-items: center;">
+                    <div style="text-align: right; line-height: 1;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Admin User</div>
+                        <div style="font-size: 0.7rem; color: #10b981;"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Online</div>
+                    </div>
+                    <i class="fas fa-user-circle fa-2x" style="color: #cbd5e1;"></i>
+                </div>
+            </header>
+
+            <section class="scroll-area">
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

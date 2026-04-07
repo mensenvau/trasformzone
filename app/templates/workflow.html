@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Builder: {{ reg.domain }} / {{ reg.report_type }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem;">
+    <div>
+        <h2 style="font-size: 1.4rem; font-weight: 400; color: #475569;">
+            Builder <small style="font-size: 0.9rem; color: #94a3b8;">{{ reg.domain }} / {{ reg.report_type }}</small>
+        </h2>
+    </div>
+    <div style="font-size: 0.85rem; color: #94a3b8;">Admin > Registry > Builder</div>
+</div>
+
+<!-- Runtime Params Bar -->
+<div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--primary);">
+    <div style="padding: 1.25rem 1.5rem; display: flex; gap: 3rem; align-items: center;">
+        <div style="min-width: 280px;">
+            <label style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b;">Runtime Sub-ID (Case Version)</label>
+            <input type="text" id="sub_id" placeholder="e.g. S01, V2, test_01"
+                   style="margin-top: 6px; border: 1px solid #94a3b8; font-weight: 600;">
+            <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">Remembered per report layout.</div>
+        </div>
+        <div>
+            <label style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b;">Pattern</label>
+            <div style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #334155; margin-top: 6px;">{{ reg.file_wildcard }}</div>
+        </div>
+        <div>
+            <label style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #64748b;">Target Table</label>
+            <div style="font-weight: 600; color: #334155; margin-top: 6px;">{{ reg.target_table }}</div>
+        </div>
+        <div style="margin-left: auto;">
+            <a href="/registry" class="btn btn-sm" style="background: #fff; color: #475569; border: 1px solid #cbd5e1;">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Step 1: Config -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="background: var(--primary); color: #fff; width: 26px; height: 26px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700;">1</span>
+            <div>
+                <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">Layout Analysis & Config</div>
+                <div style="font-size: 0.8rem; color: #64748b;">AI scans raw submission files, generates YAML field mapping.</div>
+            </div>
+        </div>
+        <button onclick="generateConfig({{ reg.id }})" id="btn-config" class="btn btn-sm">
+            <i class="fas fa-brain"></i> Trigger AI Scan
+        </button>
+    </div>
+    <div id="config-status" style="display: none; padding: 8px 20px; font-size: 0.8rem; font-weight: 600; background: #f0fdf4; border-bottom: 1px solid #bbf7d0; color: #16a34a;"></div>
+    <textarea id="config-editor" class="code-editor">{{ config_content }}</textarea>
+    <div class="card-header" style="border-top: 1px solid var(--border); background: #f8fafc; justify-content: flex-end;">
+        <button class="btn btn-sm" style="background: #fff; color: #475569; border: 1px solid #cbd5e1;" onclick="saveConfig({{ reg.id }})">
+            <i class="fas fa-save"></i> Save Config
+        </button>
+    </div>
+</div>
+
+<!-- Step 2: Parser -->
+<div class="card" id="step-parser" style="{% if not config_content %}opacity: 0.45; pointer-events: none;{% endif %}">
+    <div class="card-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="background: #1e293b; color: #fff; width: 26px; height: 26px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700;">2</span>
+            <div>
+                <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b;">Production Parser Build</div>
+                <div style="font-size: 0.8rem; color: #64748b;">Compile YAML mapping into pure Python extraction logic.</div>
+            </div>
+        </div>
+        <button onclick="generateParser({{ reg.id }})" id="btn-parser" class="btn btn-sm" style="background: #1e293b;">
+            <i class="fas fa-code"></i> Generate Parser
+        </button>
+    </div>
+    <div id="parser-status" style="display: none; padding: 8px 20px; font-size: 0.8rem; font-weight: 600; background: #f0fdf4; border-bottom: 1px solid #bbf7d0; color: #16a34a;"></div>
+    <pre class="code-preview">{{ parser_code if parser_code else 'Parser not yet generated. Complete Step 1 first.' }}</pre>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const storageKey = `sub_id_${window.location.pathname.split('/').pop()}`;
+const subInput = document.getElementById('sub_id');
+if (localStorage.getItem(storageKey)) subInput.value = localStorage.getItem(storageKey);
+subInput.addEventListener('input', () => localStorage.setItem(storageKey, subInput.value));
+
+async function apiCall(url, btnId, statusId) {
+    const sub = subInput.value.trim();
+    if (!sub) { alert('Enter a Runtime Sub-ID first.'); return; }
+
+    const btn = document.getElementById(btnId);
+    const statusEl = document.getElementById(statusId);
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `sub_id=${encodeURIComponent(sub)}`
+        });
+        const data = await res.json();
+        statusEl.style.display = 'block';
+        if (data.status === 'success') {
+            statusEl.textContent = '✓ Completed successfully. Reloading...';
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            statusEl.style.background = '#fef2f2';
+            statusEl.style.borderColor = '#fecaca';
+            statusEl.style.color = '#dc2626';
+            statusEl.textContent = 'Error: ' + data.message;
+            btn.innerHTML = orig;
+            btn.disabled = false;
+        }
+    } catch (e) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'Network error.';
+        btn.disabled = false;
+    }
+}
+
+function generateConfig(id) { apiCall(`/workflow/${id}/generate-config`, 'btn-config', 'config-status'); }
+function generateParser(id) { apiCall(`/workflow/${id}/generate-parser`, 'btn-parser', 'parser-status'); }
+function saveConfig(id) { console.log('Save config:', id); }
+</script>
+{% endblock %}

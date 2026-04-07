@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Build & Run History{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <!-- Build History -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-brain"></i> AI Generation Logs (Builds)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Report Scope</th>
+                    <th>Model</th>
+                    <th>Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in history %}
+                <tr>
+                    <td>{{ log.timestamp[:16] }}</td>
+                    <td><span class="pill" style="background: rgba(168, 85, 247, 0.1); color: #c084fc;">{{ log.type }}</span></td>
+                    <td>{{ log.domain }}/{{ log.report }}</td>
+                    <td>{{ log.model }}</td>
+                    <td>${{ log.cost or '0.00' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Run History Placeholder -->
+    <div class="card">
+        <div class="card-title"><i class="fas fa-play"></i> Execution Logs (Runs)</div>
+        <div style="text-align: center; padding: 4rem; color: var(--text-dim);">
+            <i class="fas fa-terminal fa-3x" style="margin-bottom: 1rem; opacity: 0.2;"></i>
+            <p>Run tracking logic will sync with the database once the SQL tables are created locally.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

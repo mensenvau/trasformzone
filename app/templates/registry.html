@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Report Registry{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.5rem;">
+    <h2 style="font-size:1.4rem; font-weight:400; color:#475569;">
+        Reports <small style="font-size:0.9rem; color:#94a3b8;">{{ total_count }} definitions</small>
+    </h2>
+    <div style="font-size:0.85rem; color:#94a3b8;">Admin > Reports</div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <button onclick="toggleModal('addModal', true)" class="btn btn-sm">
+            <i class="fas fa-plus"></i> Add Report
+        </button>
+        <form method="GET" action="/registry" style="display:flex; gap:8px; align-items:center;">
+            <input type="text" name="q" value="{{ q }}" placeholder="Search domain, report, pattern..."
+                   style="width:260px; height:32px;">
+            <button type="submit" class="btn btn-sm" style="background:#fff;border:1px solid #cbd5e1;color:#475569;">
+                <i class="fas fa-search"></i>
+            </button>
+            {% if q %}<a href="/registry" style="font-size:0.8rem;color:#94a3b8;">Clear</a>{% endif %}
+        </form>
+    </div>
+
+    <table style="font-size:0.83rem;">
+        <thead>
+            <tr>
+                <th>Domain / Report</th>
+                <th>Target Table</th>
+                <th>Mode / Keys</th>
+                <th>Pattern</th>
+                <th>GUID</th>
+                <th>Created</th>
+                <th style="text-align:right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in registry %}
+            <tr>
+                <td>
+                    <div style="font-size:0.7rem;font-weight:700;color:#64748b;text-transform:uppercase;">{{ item.domain }}</div>
+                    <div style="font-weight:600;">{{ item.report_type }}</div>
+                    {% if item.description %}<div style="font-size:0.75rem;color:#94a3b8;">{{ item.description }}</div>{% endif %}
+                </td>
+                <td style="max-width:160px;">
+                    <div style="font-weight:600;">{{ item.target_table }}</div>
+                </td>
+                <td>
+                    <div>{{ item.insert_mode }}</div>
+                    {% if item.key_columns %}<div style="font-size:0.75rem;color:#64748b;">{{ item.key_columns }}</div>{% endif %}
+                </td>
+                <td><span class="pill" style="font-family:'JetBrains Mono',monospace;">{{ item.file_wildcard }}</span></td>
+                <td><code style="font-size:0.72rem;color:#64748b;">{{ item.guid or '—' }}</code></td>
+                <td style="color:#94a3b8;font-size:0.78rem;white-space:nowrap;">{{ item.created_at[:10] if item.created_at else '-' }}</td>
+                <td style="text-align:right;">
+                    <div style="display:inline-flex;gap:6px;">
+                        <a href="/workflow/{{ item.id }}" class="btn btn-sm" title="Build">
+                            <i class="fas fa-hammer"></i>
+                        </a>
+                        <button class="btn btn-sm edit-btn"
+                                style="background:#fff;color:#475569;border:1px solid #cbd5e1;"
+                                data-id="{{ item.id }}"
+                                data-domain="{{ item.domain }}"
+                                data-report_type="{{ item.report_type }}"
+                                data-target_table="{{ item.target_table }}"
+                                data-insert_mode="{{ item.insert_mode }}"
+                                data-key_columns="{{ item.key_columns or '' }}"
+                                data-file_wildcard="{{ item.file_wildcard }}"
+                                data-guid="{{ item.guid }}"
+                                data-description="{{ item.description or '' }}"
+                                title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form method="POST" action="/registry/{{ item.id }}/delete"
+                              onsubmit="return confirm('Delete this report?');" style="display:inline;">
+                            <button type="submit" class="btn btn-sm"
+                                    style="background:#fff;color:#ef4444;border:1px solid #fecaca;" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align:center;padding:4rem;color:#94a3b8;">
+                    {% if q %}No results for "{{ q }}"{% else %}No reports registered yet.{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if total_pages > 1 %}
+    <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);background:#fafafa;">
+        <span style="font-size:0.8rem;color:#94a3b8;">Page {{ page }} of {{ total_pages }}</span>
+        <div style="display:flex;gap:4px;">
+            {% if page > 1 %}
+            <a href="/registry?page={{ page - 1 }}&q={{ q }}" class="btn btn-sm" style="background:#fff;color:#475569;border:1px solid #e2e8f0;"><i class="fas fa-chevron-left"></i></a>
+            {% endif %}
+            {% for p in range(1, total_pages + 1) %}
+            <a href="/registry?page={{ p }}&q={{ q }}" class="btn btn-sm"
+               style="{% if p == page %}background:var(--primary);color:#fff;{% else %}background:#fff;color:#475569;border:1px solid #e2e8f0;{% endif %}">{{ p }}</a>
+            {% endfor %}
+            {% if page < total_pages %}
+            <a href="/registry?page={{ page + 1 }}&q={{ q }}" class="btn btn-sm" style="background:#fff;color:#475569;border:1px solid #e2e8f0;"><i class="fas fa-chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Modal -->
+<div id="addModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span style="font-weight:700;color:#1e293b;">New Report Definition</span>
+            <button onclick="toggleModal('addModal', false)" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form action="/registry/add" method="POST">
+                <div class="form-row">
+                    <div class="form-group"><label>Domain</label><input type="text" name="domain" value="yardi_multifamily" required></div>
+                    <div class="form-group"><label>Report Type</label><input type="text" name="report_type" placeholder="rent_roll" required></div>
+                </div>
+                <div class="form-group"><label>Target Table</label><input type="text" name="target_table" placeholder="dbo.stg_yardi_rent_roll" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Insert Mode</label>
+                        <select name="insert_mode">
+                            <option value="upsert">UPSERT (MERGE)</option>
+                            <option value="append">INSERT (APPEND)</option>
+                            <option value="replace">REPLACE</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Key Columns</label><input type="text" name="key_columns" placeholder="EntityID,UnitNumber"></div>
+                </div>
+                <div class="form-group"><label>File Pattern (Wildcard)</label><input type="text" name="file_wildcard" placeholder="*.xlsx" required></div>
+                <div class="form-group"><label>Description (optional)</label><input type="text" name="description" placeholder="Yardi Rent Roll export"></div>
+                <button type="submit" class="btn" style="width:100%;margin-top:6px;">Register Report</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span style="font-weight:700;color:#1e293b;">Edit Report Definition</span>
+            <button onclick="toggleModal('editModal', false)" class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form id="editForm" method="POST">
+                <div class="form-row">
+                    <div class="form-group"><label>Domain</label><input type="text" name="domain" id="e_domain" required></div>
+                    <div class="form-group"><label>Report Type</label><input type="text" name="report_type" id="e_report_type" required></div>
+                </div>
+                <div class="form-group"><label>Target Table</label><input type="text" name="target_table" id="e_target_table" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Insert Mode</label>
+                        <select name="insert_mode" id="e_insert_mode">
+                            <option value="upsert">UPSERT (MERGE)</option>
+                            <option value="append">INSERT (APPEND)</option>
+                            <option value="replace">REPLACE</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Key Columns</label><input type="text" name="key_columns" id="e_key_columns"></div>
+                </div>
+                <div class="form-group"><label>File Pattern</label><input type="text" name="file_wildcard" id="e_file_wildcard" required></div>
+                <div class="form-group"><label>GUID</label><input type="text" name="guid" id="e_guid" required></div>
+                <div class="form-group"><label>Description</label><input type="text" name="description" id="e_description"></div>
+                <button type="submit" class="btn" style="width:100%;margin-top:6px;">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleModal(id, show) {
+    document.getElementById(id).style.display = show ? 'flex' : 'none';
+}
+
+document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const d = btn.dataset;
+        document.getElementById('editForm').action = `/registry/${d.id}/edit`;
+        document.getElementById('e_domain').value = d.domain;
+        document.getElementById('e_report_type').value = d.report_type;
+        document.getElementById('e_target_table').value = d.target_table;
+        document.getElementById('e_insert_mode').value = d.insert_mode;
+        document.getElementById('e_key_columns').value = d.key_columns;
+        document.getElementById('e_file_wildcard').value = d.file_wildcard;
+        document.getElementById('e_guid').value = d.guid;
+        document.getElementById('e_description').value = d.description;
+        toggleModal('editModal', true);
+    });
+});
+</script>
+<style>
+.modal-overlay {
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(15,23,42,0.45);backdrop-filter:blur(4px);
+    z-index:1000;display:none;justify-content:center;align-items:flex-start;padding-top:6vh;
+}
+.modal-card {
+    background:#fff;border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,0.2);
+    width:100%;max-width:500px;overflow:hidden;
+}
+.modal-header {
+    padding:16px 20px;border-bottom:1px solid var(--border);
+    display:flex;justify-content:space-between;align-items:center;
+    background:#f8fafc;
+}
+.modal-body { padding:20px;overflow-y:auto;max-height:75vh; }
+.modal-close {
+    background:none;border:none;font-size:1.1rem;color:#94a3b8;cursor:pointer;
+    width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:4px;
+}
+.modal-close:hover { background:#f1f5f9;color:#475569; }
+</style>
+{% endblock %}

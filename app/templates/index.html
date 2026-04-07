@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard <span style="font-size: 0.9rem; color: #94a3b8; margin-left: 10px; font-weight: 400;">System overview and AI performance</span>{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <label class="stat-label">TOTAL LAYOUTS</label>
+        <div class="stat-value">{{ registry|length }}</div>
+        <div style="font-size: 0.7rem; color: #10b981; margin-top: 5px;"><i class="fas fa-plus"></i> Registered Registry</div>
+    </div>
+    <div class="stat-card">
+        <label class="stat-label">BUILD COUNT</label>
+        <div class="stat-value" style="color: #10b981;">{{ history|length }}</div>
+        <div style="font-size: 0.7rem; color: #64748b; margin-top: 5px;">Successful AI Parses</div>
+    </div>
+    <div class="stat-card">
+        <label class="stat-label">AVG BUILD TIME</label>
+        <div class="stat-value" style="color: #6366f1;">12.4s</div>
+        <div style="font-size: 0.7rem; color: #64748b; margin-top: 5px;">Response/Extraction Avg.</div>
+    </div>
+    <div class="stat-card">
+        <label class="stat-label">AI COST (EST.)</label>
+        <div class="stat-value" style="color: #ef4444;">$0.42</div>
+        <div style="font-size: 0.7rem; color: #64748b; margin-top: 5px;">Gemini Usage Estimate</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Recent Activity -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-clock-rotate-left"></i> RECENT BUILD ACTIVITY</h3>
+            <a href="/history" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th style="width: 180px;">Time</th>
+                    <th>Report Type</th>
+                    <th>Model</th>
+                    <th>Tokens</th>
+                    <th style="text-align: right;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in history %}
+                <tr>
+                    <td style="font-size: 0.8rem; font-family: 'JetBrains Mono';">{{ log.timestamp[5:16].replace('-', '.') }}</td>
+                    <td><b>{{ log.report }}</b></td>
+                    <td><span class="pill">{{ log.model }}</span></td>
+                    <td>{{ log.tokens_in + log.tokens_out }}</td>
+                    <td style="text-align: right;">
+                        <span style="color: #10b981;"><i class="fas fa-check-circle"></i> Complete</span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 5rem; color: #94a3b8;">
+                        <i class="fas fa-inbox fa-3x" style="opacity: 0.2; margin-bottom: 1rem;"></i><br>
+                        No build history logged in MS SQL.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sidebar Cards -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-rocket"></i> QUICK ACTIONS</h3>
+            </div>
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <a href="/registry" class="btn" style="width: 100%; border-radius: 4px;">
+                    <i class="fas fa-plus"></i> Register New Report
+                </a>
+                <div class="tip-box">
+                    <i class="fas fa-lightbulb" style="margin-right: 8px;"></i>
+                    <b>PRO TIP:</b> Use wildcards like <code>ResAnalytics*.xlsx</code> to match multiple file structures to a single layout.
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="padding: 20px;">
+            <h3 class="card-title" style="margin-bottom: 15px;"><i class="fas fa-heartbeat"></i> SYSTEM HEALTH</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; font-size: 0.85rem; font-weight: 600;">
+                    <span class="status-dot" style="background: #10b981;"></span> Gemini-2.5-Flash Active
+                </div>
+                <div style="display: flex; align-items: center; font-size: 0.85rem; font-weight: 600;">
+                    <span class="status-dot" style="background: #10b981;"></span> Azure Blob Connected
+                </div>
+                <div style="display: flex; align-items: center; font-size: 0.85rem; font-weight: 600;">
+                    <span class="status-dot" style="background: #10b981;"></span> MS SQL Server Ready
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
